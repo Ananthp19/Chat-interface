@@ -1,51 +1,53 @@
-const handler = async (event) => {
+// netlify/functions/chat.js
+const fetch = require('node-fetch'); // Add this at the top
+
+exports.handler = async function(event, context) {
+  // Only allow POST
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: "Method Not Allowed" };
+  }
+
   try {
-    if (event.httpMethod !== 'POST') {
-      return {
-        statusCode: 405,
-        body: JSON.stringify({ error: 'Method not allowed' })
-      };
-    }
+    // Parse the incoming request
+    const body = JSON.parse(event.body);
 
-    // Log the incoming request
-    console.log('Request body:', event.body);
-
+    // Make request to OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
       },
-      body: event.body
+      body: JSON.stringify({
+        model: body.model || "gpt-3.5-turbo",
+        messages: body.messages,
+        temperature: 0.7
+      })
     });
 
+    // Get the response from OpenAI
     const data = await response.json();
 
-    // Log the OpenAI response
-    console.log('OpenAI response:', data);
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${data.error?.message || 'Unknown error'}`);
-    }
-
+    // Return the response
     return {
       statusCode: 200,
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json"
       },
       body: JSON.stringify(data)
     };
 
   } catch (error) {
-    console.error('Function error:', error);
+    console.log('Error:', error); // This will show in Netlify functions log
     return {
       statusCode: 500,
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({ 
-        error: error.message,
-        details: error.toString()
+        error: "An error occurred",
+        details: error.message 
       })
     };
   }
 };
-
-module.exports = { handler };
