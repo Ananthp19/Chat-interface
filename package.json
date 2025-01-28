@@ -1,0 +1,8 @@
+{
+  "name": "chat-interface",
+  "version": "1.0.0",
+  "description": "Chat interface with OpenAI",
+  "dependencies": {
+    "node-fetch": "^2.6.1"
+  }
+}
